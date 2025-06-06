@@ -10,37 +10,12 @@ pub const Piece = struct {
         return Piece{ .color = undefined, .piece_type = undefined, .rank = undefined, .file = undefined };
     }
 
-    pub fn getRankAsInt(self: *Piece) u32 {
-        const rank = std.enums.tagName(d.RankBits, self.rank).?;
-        if (std.mem.eql(u8, rank, "one")) {
-            return 1;
-        }
-        if (std.mem.eql(u8, rank, "two")) {
-            return 2;
-        }
-        if (std.mem.eql(u8, rank, "three")) {
-            return 3;
-        }
-        if (std.mem.eql(u8, rank, "four")) {
-            return 4;
-        }
-        if (std.mem.eql(u8, rank, "five")) {
-            return 5;
-        }
-        if (std.mem.eql(u8, rank, "six")) {
-            return 6;
-        }
-        if (std.mem.eql(u8, rank, "seven")) {
-            return 7;
-        }
-        if (std.mem.eql(u8, rank, "eight")) {
-            return 8;
-        }
-        return 0;
+    pub fn getRankAsInt(self: *Piece) ?u32 {
+        return d.RankToIntMap.get(self.rank);
     }
 
-    pub fn getFileAsStr(self: *Piece) ?[]const u8 {
-        return std.enums.tagName(d.FileBits, self.file);
+    pub fn getFileAsChar(self: *Piece) ?u8 {
+        return d.FileToCharMap.get(self.file);
     }
 
     pub fn pieceChar(self: *Piece) u8 {
@@ -176,11 +151,11 @@ test "char" {
 test "rank" {
     var piece: Piece = Piece.init();
     piece.rank = d.RankBits.one;
-    std.debug.print("{d}\n", .{piece.getRankAsInt()});
+    std.debug.print("{d}\n", .{piece.getRankAsInt().?});
 }
 
 test "file" {
     var piece: Piece = Piece.init();
     piece.file = d.FileBits.A;
-    std.debug.print("{?s}\n", .{piece.getFileAsStr()});
+    std.debug.print("{c}\n", .{piece.getFileAsChar().?});
 }
