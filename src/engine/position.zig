@@ -18,4 +18,37 @@ pub const Position = struct {
         const empty_pos = Position{ .move = 0, .plyCount = 0, .turn = undefined, .last_pos = undefined, .next_pos = undefined, .white_castling = 0, .black_castling = 0, .en_pessant_sq = 0, .white_pieces = [_]piece.Piece{undefined} ** 16, .black_pieces = [_]piece.Piece{undefined} ** 16 };
         return empty_pos;
     }
+
+    pub fn print(self: Position) void {
+        const line = "   _ _ _ _ _ _ _ _ \n";
+        const div = "|";
+        const empty_sq = " ";
+        const files = "abcdefgh";
+
+        var rank: u8 = 8;
+        std.debug.print("{s}", .{line});
+        while (rank >= 1) : (rank -= 1) {
+            std.debug.print("{d} {s}", .{ rank, div });
+            file_letters: for (files) |file| {
+                for (self.white_pieces) |wp| {
+                    if (wp.getFileAsChar() == file and wp.getRankAsInt() == rank) {
+                        std.debug.print("{c}", .{wp.pieceChar()});
+                        std.debug.print("{s}", .{div});
+                        continue :file_letters;
+                    }
+                }
+                for (self.black_pieces) |bp| {
+                    if (bp.getFileAsChar() == file and bp.getRankAsInt() == rank) {
+                        std.debug.print("{c}", .{bp.pieceChar()});
+                        std.debug.print("{s}", .{div});
+                        continue :file_letters;
+                    }
+                }
+                std.debug.print("{s}", .{empty_sq});
+                std.debug.print("{s}", .{div});
+            }
+            std.debug.print("\n", .{});
+        }
+        std.debug.print("   A B C D E F G H ", .{});
+    }
 };
