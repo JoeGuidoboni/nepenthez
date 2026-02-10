@@ -149,6 +149,26 @@ fn charToBoard(char: u8, rank: d.RankBits, file: d.FileBits) !bb.Board {
     return newBoard;
 }
 
+pub fn colorAndPieceToChar(color: d.Color, pieceType: d.PieceType) u8 {
+    if (color == d.Color.none or pieceType == d.PieceType.no_piece) return '_';
+
+    const char: u8 = switch (pieceType) {
+        d.PieceType.pawn => 'p',
+        d.PieceType.bishop => 'b',
+        d.PieceType.knight => 'n',
+        d.PieceType.rook => 'r',
+        d.PieceType.queen => 'q',
+        d.PieceType.king => 'k',
+        else => '_',
+    };
+
+    if (color == d.Color.white) {
+        return std.ascii.toUpper(char);
+    }
+
+    return char;
+}
+
 pub fn intToRankBits(rankNum: u64) !d.RankBits {
     switch (rankNum) {
         1 => {
