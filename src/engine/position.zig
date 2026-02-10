@@ -39,7 +39,7 @@ pub const Position = struct {
         return flag;
     }
 
-    pub fn print(self: Position) PositionError!void {
+    pub fn print(self: Position) !void {
         if (self.isValidPosition()) return PositionError.InvalidPosition;
 
         const line = "   _ _ _ _ _ _ _ _ \n";
@@ -54,14 +54,18 @@ pub const Position = struct {
             std.debug.print("{d} {s}", .{ rank, div });
             file_letters: for (files) |file| {
                 for (self.white_pieces) |wp| {
-                    if (wp.bitboard == &rank) {
+                    const fileBits = try utils.charToFileBits(file);
+                    const rankBits = try utils.intToRankBits(rank);
+                    if (wp.bitboard == @intFromEnum(fileBits) & @intFromEnum(rankBits)) {
                         std.debug.print("{c}", .{wp.getPieceChar()});
                         std.debug.print("{s}", .{div});
                         continue :file_letters;
                     }
                 }
                 for (self.black_pieces) |bp| {
-                    if (bp.bitboard == file & rank) {
+                    const fileBits = try utils.charToFileBits(file);
+                    const rankBits = try utils.intToRankBits(rank);
+                    if (bp.bitboard == @intFromEnum(fileBits) & @intFromEnum(rankBits)) {
                         std.debug.print("{c}", .{bp.getPieceChar()});
                         std.debug.print("{s}", .{div});
                         continue :file_letters;
