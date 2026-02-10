@@ -1,5 +1,5 @@
 const std = @import("std");
-const utils = @import("utils.zig");
+const utils = @import("engine/utils.zig");
 const position = @import("engine/position.zig");
 
 pub fn main() !void {

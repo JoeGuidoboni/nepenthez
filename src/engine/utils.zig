@@ -1,7 +1,7 @@
 const std = @import("std");
-const d = @import("engine/defs.zig");
-const position = @import("engine/position.zig");
-const bb = @import("engine/board.zig");
+const d = @import("defs.zig");
+const position = @import("position.zig");
+const bb = @import("board.zig");
 
 // errors
 const UtilsError = error{ RankConversion, FileConversion, FENConversion, BadPieceInfo, CoordConversion };

@@ -1,6 +1,6 @@
 const std = @import("std");
 const d = @import("defs.zig");
-const utils = @import("../utils.zig");
+const utils = @import("utils.zig");
 
 pub const BitBoard = u64;
 pub const emptyBitBoard = 0;

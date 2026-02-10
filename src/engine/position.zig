@@ -1,6 +1,7 @@
 const std = @import("std");
 const d = @import("defs.zig");
 const bb = @import("board.zig");
+const utils = @import("utils.zig");
 
 const PositionError = error{InvalidPosition};
 
@@ -53,7 +54,7 @@ pub const Position = struct {
             std.debug.print("{d} {s}", .{ rank, div });
             file_letters: for (files) |file| {
                 for (self.white_pieces) |wp| {
-                    if (wp.bitboard == file & rank) {
+                    if (wp.bitboard == &rank) {
                         std.debug.print("{c}", .{wp.getPieceChar()});
                         std.debug.print("{s}", .{div});
                         continue :file_letters;
