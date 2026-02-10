@@ -6,6 +6,12 @@ const bb = @import("board.zig");
 // errors
 const UtilsError = error{ RankConversion, FileConversion, FENConversion, BadPieceInfo, CoordConversion };
 
+const banner =
+    \\  __   _ _______  _____  _______ __   _ _______ _     _ _______ ______
+    \\  | \  | |______ |_____] |______ | \  |    |    |_____| |______  ____/
+    \\  |  \_| |______ |       |______ |  \_|    |    |     | |______ /_____
+;
+
 pub fn fenToPosition(fen: []const u8) !position.Position {
     var fenPosition = position.Position.init();
 
