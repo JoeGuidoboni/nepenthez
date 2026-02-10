@@ -39,6 +39,10 @@ pub const Position = struct {
         return flag;
     }
 
+    /// Prints the current position
+    /// TODO: add additional FEN information
+    ///
+    /// Prints the position from whites perspective with A1 in the bottom left and H8 in the top right
     pub fn print(self: Position) !void {
         if (self.isValidPosition()) return PositionError.InvalidPosition;
 
