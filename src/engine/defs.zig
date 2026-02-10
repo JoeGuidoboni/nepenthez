@@ -1,5 +1,13 @@
 const std = @import("std");
 
+pub const banner =
+    \\    _______  ________  ________  ________  ________  ________  ________  ________  ________ 
+    \\  //   /   \/        \/        \/        \/    /   \/        \/    /   \/        \/        \
+    \\ //        /        _/         /        _/         /        _/         /        _/-        /
+    \\/         /        _/       __/        _/         //       //         /        _/        _/ 
+    \\\__/_____/\________/\______/  \________/\__/_____/ \______/ \___/____/\________/\________/  
+;
+
 pub const Color = enum { none, white, black };
 pub const PieceType = enum { no_piece, pawn, bishop, knight, rook, queen, king };
 

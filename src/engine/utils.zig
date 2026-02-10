@@ -1,16 +1,14 @@
 const std = @import("std");
 const d = @import("defs.zig");
+const Color = d.Color;
+const PieceType = d.PieceType;
+const RankBits = d.RankBits;
+const FileBits = d.FileBits;
 const position = @import("position.zig");
 const bb = @import("board.zig");
 
 // errors
 const UtilsError = error{ RankConversion, FileConversion, FENConversion, BadPieceInfo, CoordConversion };
-
-const banner =
-    \\  __   _ _______  _____  _______ __   _ _______ _     _ _______ ______
-    \\  | \  | |______ |_____] |______ | \  |    |    |_____| |______  ____/
-    \\  |  \_| |______ |       |______ |  \_|    |    |     | |______ /_____
-;
 
 pub fn fenToPosition(fen: []const u8) !position.Position {
     var fenPosition = position.Position.init();
@@ -34,7 +32,7 @@ pub fn fenToPosition(fen: []const u8) !position.Position {
 
     // get the easy ones
     // const enPessantSq = if (!std.mem.eql(u8, "-", enPassantSqSlice)) try coordToBitBoard(enPassantSqSlice) else undefined;
-    const sideToMove = if (std.mem.eql(u8, sideToMoveSlice, "w")) d.Color.white else if (std.mem.eql(u8, sideToMoveSlice, "b")) d.Color.black else undefined;
+    const sideToMove = if (std.mem.eql(u8, sideToMoveSlice, "w")) Color.white else if (std.mem.eql(u8, sideToMoveSlice, "b")) Color.black else undefined;
     const plyClock = try std.fmt.parseInt(u32, plyClockSlice, 10);
     const moveNumber = try std.fmt.parseInt(u32, moveNumberSlice, 10);
 
@@ -72,10 +70,10 @@ pub fn fenToPosition(fen: []const u8) !position.Position {
             // if char is not a number, its a piece
             if (!isNum(symbol)) {
                 const p = try charToBoard(symbol, try intToRankBits(rankIdx), try intToFileBits(fileIdx));
-                if (p.color == d.Color.white) {
+                if (p.color == Color.white) {
                     whitePieces[whiteIdx] = p;
                     whiteIdx += 1;
-                } else if (p.color == d.Color.black) {
+                } else if (p.color == Color.black) {
                     blackPieces[blackIdx] = p;
                     blackIdx += 1;
                 }
@@ -88,64 +86,64 @@ pub fn fenToPosition(fen: []const u8) !position.Position {
 
     fenPosition.plyCount = plyClock;
     fenPosition.turn = sideToMove;
-    fenPosition.move = moveNumber;
-    fenPosition.white_pieces = whitePieces;
-    fenPosition.black_pieces = blackPieces;
+    fenPosition.move50 = moveNumber;
+    fenPosition.whitePieces = whitePieces;
+    fenPosition.blackPieces = blackPieces;
     // fenPosition.en_pessant_sq = enPessantSq;
     return fenPosition;
 }
 
-fn charToBoard(char: u8, rank: d.RankBits, file: d.FileBits) !bb.Board {
-    var c: d.Color = d.Color.none;
-    var pt: d.PieceType = d.PieceType.no_piece;
+fn charToBoard(char: u8, rank: RankBits, file: FileBits) !bb.Board {
+    var c: Color = Color.none;
+    var pt: PieceType = PieceType.no_piece;
     switch (char) {
         'p' => {
-            c = d.Color.black;
-            pt = d.PieceType.pawn;
+            c = Color.black;
+            pt = PieceType.pawn;
         },
         'b' => {
-            c = d.Color.black;
-            pt = d.PieceType.bishop;
+            c = Color.black;
+            pt = PieceType.bishop;
         },
         'n' => {
-            c = d.Color.black;
-            pt = d.PieceType.knight;
+            c = Color.black;
+            pt = PieceType.knight;
         },
         'r' => {
-            c = d.Color.black;
-            pt = d.PieceType.rook;
+            c = Color.black;
+            pt = PieceType.rook;
         },
         'q' => {
-            c = d.Color.black;
-            pt = d.PieceType.queen;
+            c = Color.black;
+            pt = PieceType.queen;
         },
         'k' => {
-            c = d.Color.black;
-            pt = d.PieceType.king;
+            c = Color.black;
+            pt = PieceType.king;
         },
         'P' => {
-            c = d.Color.white;
-            pt = d.PieceType.pawn;
+            c = Color.white;
+            pt = PieceType.pawn;
         },
         'B' => {
-            c = d.Color.white;
-            pt = d.PieceType.bishop;
+            c = Color.white;
+            pt = PieceType.bishop;
         },
         'N' => {
-            c = d.Color.white;
-            pt = d.PieceType.knight;
+            c = Color.white;
+            pt = PieceType.knight;
         },
         'R' => {
-            c = d.Color.white;
-            pt = d.PieceType.rook;
+            c = Color.white;
+            pt = PieceType.rook;
         },
         'Q' => {
-            c = d.Color.white;
-            pt = d.PieceType.queen;
+            c = Color.white;
+            pt = PieceType.queen;
         },
         'K' => {
-            c = d.Color.white;
-            pt = d.PieceType.king;
+            c = Color.white;
+            pt = PieceType.king;
         },
         else => {
             return UtilsError.BadPieceInfo;
@@ -155,51 +153,51 @@ fn charToBoard(char: u8, rank: d.RankBits, file: d.FileBits) !bb.Board {
     return newBoard;
 }
 
-pub fn colorAndPieceToChar(color: d.Color, pieceType: d.PieceType) u8 {
-    if (color == d.Color.none or pieceType == d.PieceType.no_piece) return '_';
+pub fn colorAndPieceToChar(color: Color, pieceType: PieceType) u8 {
+    if (color == Color.none or pieceType == PieceType.no_piece) return '_';
 
     const char: u8 = switch (pieceType) {
-        d.PieceType.pawn => 'p',
-        d.PieceType.bishop => 'b',
-        d.PieceType.knight => 'n',
-        d.PieceType.rook => 'r',
-        d.PieceType.queen => 'q',
-        d.PieceType.king => 'k',
+        PieceType.pawn => 'p',
+        PieceType.bishop => 'b',
+        PieceType.knight => 'n',
+        PieceType.rook => 'r',
+        PieceType.queen => 'q',
+        PieceType.king => 'k',
         else => '_',
     };
 
-    if (color == d.Color.white) {
+    if (color == Color.white) {
         return std.ascii.toUpper(char);
     }
 
     return char;
 }
 
-pub fn intToRankBits(rankNum: u64) !d.RankBits {
+pub fn intToRankBits(rankNum: u64) !RankBits {
     switch (rankNum) {
         1 => {
-            return d.RankBits.one;
+            return RankBits.one;
         },
         2 => {
-            return d.RankBits.two;
+            return RankBits.two;
         },
         3 => {
-            return d.RankBits.three;
+            return RankBits.three;
         },
         4 => {
-            return d.RankBits.four;
+            return RankBits.four;
         },
         5 => {
-            return d.RankBits.five;
+            return RankBits.five;
         },
         6 => {
-            return d.RankBits.six;
+            return RankBits.six;
         },
         7 => {
-            return d.RankBits.seven;
+            return RankBits.seven;
         },
         8 => {
-            return d.RankBits.eight;
+            return RankBits.eight;
         },
         else => {
             return UtilsError.RankConversion;
@@ -207,31 +205,31 @@ pub fn intToRankBits(rankNum: u64) !d.RankBits {
     }
 }
 
-pub fn intToFileBits(fileNum: u64) !d.FileBits {
+pub fn intToFileBits(fileNum: u64) !FileBits {
     switch (fileNum) {
         1 => {
-            return d.FileBits.A;
+            return FileBits.A;
         },
         2 => {
-            return d.FileBits.B;
+            return FileBits.B;
         },
         3 => {
-            return d.FileBits.C;
+            return FileBits.C;
         },
         4 => {
-            return d.FileBits.D;
+            return FileBits.D;
         },
         5 => {
-            return d.FileBits.E;
+            return FileBits.E;
         },
         6 => {
-            return d.FileBits.F;
+            return FileBits.F;
         },
         7 => {
-            return d.FileBits.G;
+            return FileBits.G;
         },
         8 => {
-            return d.FileBits.H;
+            return FileBits.H;
         },
         else => {
             return UtilsError.FileConversion;
@@ -239,31 +237,31 @@ pub fn intToFileBits(fileNum: u64) !d.FileBits {
     }
 }
 
-pub fn charToFileBits(fileChar: u8) !d.FileBits {
+pub fn charToFileBits(fileChar: u8) !FileBits {
     switch (fileChar) {
         'a', 'A' => {
-            return d.FileBits.A;
+            return FileBits.A;
         },
         'b', 'B' => {
-            return d.FileBits.B;
+            return FileBits.B;
         },
         'c', 'C' => {
-            return d.FileBits.C;
+            return FileBits.C;
         },
         'd', 'D' => {
-            return d.FileBits.D;
+            return FileBits.D;
         },
         'e', 'E' => {
-            return d.FileBits.E;
+            return FileBits.E;
         },
         'f', 'F' => {
-            return d.FileBits.F;
+            return FileBits.F;
         },
         'g', 'G' => {
-            return d.FileBits.G;
+            return FileBits.G;
         },
         'h', 'H' => {
-            return d.FileBits.H;
+            return FileBits.H;
         },
         else => {
             return UtilsError.FileConversion;
@@ -271,12 +269,12 @@ pub fn charToFileBits(fileChar: u8) !d.FileBits {
     }
 }
 
-pub fn coordToRankAndFile(coord: []const u8) !struct { rank: d.RankBits, file: d.FileBits } {
+pub fn coordToRankAndFile(coord: []const u8) !struct { rank: RankBits, file: FileBits } {
     if (coord.len != 2 || !isNum(coord[1])) return UtilsError.CoordConversion;
     return .{ .rank = try intToRankBits(coord[1]), .file = try charToFileBits(coord[0]) };
 }
 
-pub fn bbFromRankAndFile(rank: d.RankBits, file: d.FileBits) bb.BitBoard {
+pub fn bbFromRankAndFile(rank: RankBits, file: FileBits) bb.BitBoard {
     return @intFromEnum(rank) & @intFromEnum(file);
 }
 
