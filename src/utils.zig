@@ -1,7 +1,7 @@
 const std = @import("std");
 const d = @import("engine/defs.zig");
-const piece = @import("engine/piece.zig");
 const position = @import("engine/position.zig");
+const bb = @import("engine/board.zig");
 
 // errors
 const UtilsError = error{ RankConversion, FileConversion, FENConversion, BadPieceInfo, CoordConversion };
@@ -22,12 +22,12 @@ pub fn fenToPosition(fen: []const u8) !position.Position {
     const positionStringSlice = fen[0..spaceIdx[0]];
     const sideToMoveSlice = fen[spaceIdx[0] + 1 .. spaceIdx[1]];
     // const castlingRightsSlice = fen[spaceIdx[1] + 1 .. spaceIdx[2]];
-    const enPassantSqSlice = fen[spaceIdx[2] + 1 .. spaceIdx[3]];
+    // const enPassantSqSlice = fen[spaceIdx[2] + 1 .. spaceIdx[3]];
     const plyClockSlice = fen[spaceIdx[3] + 1 .. spaceIdx[4]];
     const moveNumberSlice = fen[spaceIdx[4] + 1 ..];
 
     // get the easy ones
-    const enPessantSq = if (!std.mem.eql(u8, "-", enPassantSqSlice)) try coordToBitBoard(enPassantSqSlice) else undefined;
+    // const enPessantSq = if (!std.mem.eql(u8, "-", enPassantSqSlice)) try coordToBitBoard(enPassantSqSlice) else undefined;
     const sideToMove = if (std.mem.eql(u8, sideToMoveSlice, "w")) d.Color.white else if (std.mem.eql(u8, sideToMoveSlice, "b")) d.Color.black else undefined;
     const plyClock = try std.fmt.parseInt(u32, plyClockSlice, 10);
     const moveNumber = try std.fmt.parseInt(u32, moveNumberSlice, 10);
@@ -53,8 +53,8 @@ pub fn fenToPosition(fen: []const u8) !position.Position {
 
     const rankSlices = [8][]const u8{ rank1slice, rank2slice, rank3slice, rank4slice, rank5slice, rank6slice, rank7slice, rank8slice };
 
-    var whitePieces = [_]piece.Piece{undefined} ** 16;
-    var blackPieces = [_]piece.Piece{undefined} ** 16;
+    var whitePieces = [_]bb.Board{undefined} ** 16;
+    var blackPieces = [_]bb.Board{undefined} ** 16;
     var whiteIdx: u32 = 0;
     var blackIdx: u32 = 0;
 
@@ -63,9 +63,9 @@ pub fn fenToPosition(fen: []const u8) !position.Position {
         var fileIdx: u32 = 1;
         for (slice, 0..slice.len) |symbol, _| {
 
-            // char is not a number, therefor its a piece
+            // if char is not a number, its a piece
             if (!isNum(symbol)) {
-                const p = try charToPieceWithCoords(symbol, try intToRankBits(rankIdx), try intToFileBits(fileIdx));
+                const p = try charToBoard(symbol, try intToRankBits(rankIdx), try intToFileBits(fileIdx));
                 if (p.color == d.Color.white) {
                     whitePieces[whiteIdx] = p;
                     whiteIdx += 1;
@@ -85,11 +85,11 @@ pub fn fenToPosition(fen: []const u8) !position.Position {
     fenPosition.move = moveNumber;
     fenPosition.white_pieces = whitePieces;
     fenPosition.black_pieces = blackPieces;
-    fenPosition.en_pessant_sq = enPessantSq;
+    // fenPosition.en_pessant_sq = enPessantSq;
     return fenPosition;
 }
 
-fn charToPieceWithCoords(char: u8, rank: d.RankBits, file: d.FileBits) !piece.Piece {
+fn charToBoard(char: u8, rank: d.RankBits, file: d.FileBits) !bb.Board {
     var c: d.Color = d.Color.none;
     var pt: d.PieceType = d.PieceType.no_piece;
     switch (char) {
@@ -145,8 +145,8 @@ fn charToPieceWithCoords(char: u8, rank: d.RankBits, file: d.FileBits) !piece.Pi
             return UtilsError.BadPieceInfo;
         },
     }
-    const newPiece = piece.Piece{ .color = c, .piece_type = pt, .rank = rank, .file = file };
-    return newPiece;
+    const newBoard = bb.Board{ .color = c, .pieceType = pt, .bitboard = bbFromRankAndFile(rank, file) };
+    return newBoard;
 }
 
 pub fn intToRankBits(rankNum: u64) !d.RankBits {
@@ -250,7 +250,7 @@ pub fn coordToRankAndFile(coord: []const u8) !struct { rank: d.RankBits, file: d
     return .{ .rank = try intToRankBits(coord[1]), .file = try charToFileBits(coord[0]) };
 }
 
-pub fn bbFromRankAndFile(rank: d.RankBits, file: d.FileBits) u64 {
+pub fn bbFromRankAndFile(rank: d.RankBits, file: d.FileBits) bb.BitBoard {
     return @intFromEnum(rank) & @intFromEnum(file);
 }
 
