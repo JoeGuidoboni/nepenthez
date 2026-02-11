@@ -10,6 +10,7 @@ const bb = @import("board.zig");
 // errors
 const UtilsError = error{ RankConversion, FileConversion, FENConversion, BadPieceInfo, CoordConversion };
 
+/// Reads a FEN string and converts it to a Position struct
 pub fn fenToPosition(fen: []const u8) !position.Position {
     var fenPosition = position.Position.init();
 
