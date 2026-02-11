@@ -1,4 +1,5 @@
 const std = @import("std");
+const print = std.debug.print;
 const Color = @import("defs.zig").Color;
 const PieceType = @import("defs.zig").PieceType;
 const bb = @import("board.zig");
@@ -14,8 +15,8 @@ const PositionError = error{InvalidPosition};
 /// - lastPos: reference to last Position, if there is one
 /// - nextPos: reference to next Position, if there is one
 /// - enPessantSq: en pessant square, if there is one
-/// - whiteCastling: byte representing white castling privilege
-/// - blackCastling: byte representing black castling privilege
+/// - whiteCastling: u2 representing white castling privilege. 01 is kingside, 10 is queenside, 11 is both
+/// - blackCastling: u2 representing black castling privilege. 01 is kingside, 10 is queenside, 11 is both
 /// - whitePieces: array of Boards representing white's pieces
 /// - blackPieces: array of Boards representing black's pieces
 pub const Position = struct {
@@ -25,8 +26,8 @@ pub const Position = struct {
     lastPos: ?*Position = null,
     nextPos: ?*Position = null,
     enPessantSq: ?u64 = null,
-    whiteCastling: u8 = 0,
-    blackCastling: u8 = 0,
+    whiteCastling: u2 = 0,
+    blackCastling: u2 = 0,
     whitePieces: [16]bb.Board,
     blackPieces: [16]bb.Board,
 
@@ -41,22 +42,22 @@ pub const Position = struct {
     pub fn isValidPosition(self: Position) bool {
         // Check that white pieces and black pieces don't occupy the same square
         // This can be done with a bitwise XOR across all bitboards which should equal 0;
-        var flag = false;
         var allBBs: bb.BitBoard = bb.emptyBitBoard;
-        for (0..15) |idx| {
-            allBBs = allBBs ^ self.whitePieces[idx].bitboard ^ self.blackPieces[idx].bitboard;
+        for (0..15) |i| {
+            const whiteBoard = self.whitePieces[i];
+            const blackBoard = self.blackPieces[i];
+            if (whiteBoard.color == Color.none or blackBoard.color == Color.none) return false;
+            allBBs = allBBs ^ whiteBoard.bitboard ^ blackBoard.bitboard;
         }
-        if (allBBs == bb.emptyBitBoard) {
-            flag = true;
-        }
-        return flag;
+        if (allBBs == bb.emptyBitBoard) return true;
+        return false;
     }
 
     /// Prints the current position
     /// TODO: add additional FEN information
     ///
     /// Prints the position from whites perspective with A1 in the bottom left and H8 in the top right
-    pub fn print(self: Position) !void {
+    pub fn printPosition(self: Position) !void {
         if (self.isValidPosition()) return PositionError.InvalidPosition;
 
         const line = "   _ _ _ _ _ _ _ _ \n";
@@ -64,18 +65,18 @@ pub const Position = struct {
         const empty_sq = " ";
         const files = "abcdefgh";
 
-        std.debug.print("{s}", .{line});
+        print("{s}", .{line});
 
         var rank: u8 = 8;
         while (rank >= 1) : (rank -= 1) {
-            std.debug.print("{d} {s}", .{ rank, div });
+            print("{d} {s}", .{ rank, div });
             file_letters: for (files) |file| {
                 for (self.whitePieces) |wp| {
                     const fileBits = try utils.charToFileBits(file);
                     const rankBits = try utils.intToRankBits(rank);
                     if (wp.bitboard == @intFromEnum(fileBits) & @intFromEnum(rankBits)) {
-                        std.debug.print("{c}", .{wp.getPieceChar()});
-                        std.debug.print("{s}", .{div});
+                        print("{c}", .{wp.getPieceChar()});
+                        print("{s}", .{div});
                         continue :file_letters;
                     }
                 }
@@ -83,17 +84,22 @@ pub const Position = struct {
                     const fileBits = try utils.charToFileBits(file);
                     const rankBits = try utils.intToRankBits(rank);
                     if (bp.bitboard == @intFromEnum(fileBits) & @intFromEnum(rankBits)) {
-                        std.debug.print("{c}", .{bp.getPieceChar()});
-                        std.debug.print("{s}", .{div});
+                        print("{c}", .{bp.getPieceChar()});
+                        print("{s}", .{div});
                         continue :file_letters;
                     }
                 }
-                std.debug.print("{s}", .{empty_sq});
-                std.debug.print("{s}", .{div});
+                print("{s}", .{empty_sq});
+                print("{s}", .{div});
             }
-            std.debug.print("\n", .{});
+            print("\n", .{});
         }
 
-        std.debug.print("   A B C D E F G H ", .{});
+        print("   A B C D E F G H ", .{});
+        print("\n\n\n", .{});
+        print("Ply:\t{d}\n", .{self.plyCount});
+        print("Side to move:\t{s}\n", .{@tagName(self.turn)});
+        print("White castling rights:\t.{b}\n", .{self.whiteCastling});
+        print("Black castling rights:\t.{b}\n", .{self.blackCastling});
     }
 };

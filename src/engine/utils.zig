@@ -25,14 +25,26 @@ pub fn fenToPosition(fen: []const u8) !position.Position {
 
     const positionStringSlice = fen[0..spaceIdx[0]];
     const sideToMoveSlice = fen[spaceIdx[0] + 1 .. spaceIdx[1]];
-    // const castlingRightsSlice = fen[spaceIdx[1] + 1 .. spaceIdx[2]];
+    const castlingRightsSlice = fen[spaceIdx[1] + 1 .. spaceIdx[2]];
     // const enPassantSqSlice = fen[spaceIdx[2] + 1 .. spaceIdx[3]];
     const plyClockSlice = fen[spaceIdx[3] + 1 .. spaceIdx[4]];
     const moveNumberSlice = fen[spaceIdx[4] + 1 ..];
 
-    // get the easy ones
     // const enPessantSq = if (!std.mem.eql(u8, "-", enPassantSqSlice)) try coordToBitBoard(enPassantSqSlice) else undefined;
     const sideToMove = if (std.mem.eql(u8, sideToMoveSlice, "w")) Color.white else if (std.mem.eql(u8, sideToMoveSlice, "b")) Color.black else undefined;
+    var whiteCastling: u2 = 0;
+    var blackCastling: u2 = 0;
+    if (!std.mem.eql(u8, castlingRightsSlice, "-")) {
+        for (castlingRightsSlice) |castleChar| {
+            switch (castleChar) {
+                'K' => whiteCastling += 1,
+                'Q' => whiteCastling += 2,
+                'k' => blackCastling += 1,
+                'q' => blackCastling += 2,
+                else => unreachable,
+            }
+        }
+    }
     const plyClock = try std.fmt.parseInt(u32, plyClockSlice, 10);
     const moveNumber = try std.fmt.parseInt(u32, moveNumberSlice, 10);
 
@@ -87,6 +99,8 @@ pub fn fenToPosition(fen: []const u8) !position.Position {
     fenPosition.plyCount = plyClock;
     fenPosition.turn = sideToMove;
     fenPosition.move50 = moveNumber;
+    fenPosition.whiteCastling = whiteCastling;
+    fenPosition.blackCastling = blackCastling;
     fenPosition.whitePieces = whitePieces;
     fenPosition.blackPieces = blackPieces;
     // fenPosition.en_pessant_sq = enPessantSq;
