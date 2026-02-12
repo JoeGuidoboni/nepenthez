@@ -4,8 +4,9 @@ const Color = d.Color;
 const PieceType = d.PieceType;
 const RankBits = d.RankBits;
 const FileBits = d.FileBits;
+const board = @import("board.zig");
 const position = @import("position.zig");
-const bb = @import("board.zig");
+const move = @import("move.zig");
 
 // errors
 const UtilsError = error{ RankConversion, FileConversion, FENConversion, BadPieceInfo, CoordConversion };
@@ -70,8 +71,8 @@ pub fn fenToPosition(fen: []const u8) !position.Position {
 
     const rankSlices = [8][]const u8{ rank1slice, rank2slice, rank3slice, rank4slice, rank5slice, rank6slice, rank7slice, rank8slice };
 
-    var whitePieces = [_]bb.Board{undefined} ** 16;
-    var blackPieces = [_]bb.Board{undefined} ** 16;
+    var whitePieces = [_]board.Board{undefined} ** 16;
+    var blackPieces = [_]board.Board{undefined} ** 16;
     var whiteIdx: u32 = 0;
     var blackIdx: u32 = 0;
 
@@ -108,7 +109,8 @@ pub fn fenToPosition(fen: []const u8) !position.Position {
     return fenPosition;
 }
 
-fn charToBoard(char: u8, rank: RankBits, file: FileBits) !bb.Board {
+/// Converts a char, rank, and file to a Board
+pub fn charToBoard(char: u8, rank: RankBits, file: FileBits) !board.Board {
     var c: Color = Color.none;
     var pt: PieceType = PieceType.no_piece;
     switch (char) {
@@ -164,10 +166,11 @@ fn charToBoard(char: u8, rank: RankBits, file: FileBits) !bb.Board {
             return UtilsError.BadPieceInfo;
         },
     }
-    const newBoard = bb.Board{ .color = c, .pieceType = pt, .bitboard = bbFromRankAndFile(rank, file) };
+    const newBoard = board.Board{ .color = c, .pieceType = pt, .bitboard = bbFromRankAndFile(rank, file) };
     return newBoard;
 }
 
+/// Converts a color and piece to a char
 pub fn colorAndPieceToChar(color: Color, pieceType: PieceType) u8 {
     if (color == Color.none or pieceType == PieceType.no_piece) return '_';
 
@@ -188,6 +191,7 @@ pub fn colorAndPieceToChar(color: Color, pieceType: PieceType) u8 {
     return char;
 }
 
+/// Converts an int to its RankBits
 pub fn intToRankBits(rankNum: u64) !RankBits {
     switch (rankNum) {
         1 => {
@@ -220,6 +224,7 @@ pub fn intToRankBits(rankNum: u64) !RankBits {
     }
 }
 
+/// Converts an int to its FileBits
 pub fn intToFileBits(fileNum: u64) !FileBits {
     switch (fileNum) {
         1 => {
@@ -252,6 +257,7 @@ pub fn intToFileBits(fileNum: u64) !FileBits {
     }
 }
 
+/// Converts a char to FileBits
 pub fn charToFileBits(fileChar: u8) !FileBits {
     switch (fileChar) {
         'a', 'A' => {
@@ -284,24 +290,52 @@ pub fn charToFileBits(fileChar: u8) !FileBits {
     }
 }
 
+/// Converts coords to Rank and File
 pub fn coordToRankAndFile(coord: []const u8) !struct { rank: RankBits, file: FileBits } {
     if (coord.len != 2 || !isNum(coord[1])) return UtilsError.CoordConversion;
     return .{ .rank = try intToRankBits(coord[1]), .file = try charToFileBits(coord[0]) };
 }
 
-pub fn bbFromRankAndFile(rank: RankBits, file: FileBits) bb.BitBoard {
+/// Creates a BitBoard from a rank and file
+pub fn bbFromRankAndFile(rank: RankBits, file: FileBits) board.BitBoard {
     return @intFromEnum(rank) & @intFromEnum(file);
 }
 
-pub fn coordToBitBoard(coord: []const u8) !u64 {
+/// Converts a coord string to a BitBoard
+pub fn coordToBitBoard(coord: []const u8) !board.BitBoard {
     const rankAndFile = try coordToRankAndFile(coord);
     return try bbFromRankAndFile(rankAndFile.rank, rankAndFile.file);
 }
 
+/// Checks if char is a single digit int
 pub fn isNum(char: u8) bool {
     const str = [1]u8{char};
     _ = std.fmt.parseInt(u32, &str, 10) catch {
         return false;
     };
+    return true;
+}
+
+/// Checks if a Position is valid
+/// TODO: add more checks for a valid position
+pub fn isValidPosition(pos: position.Position) bool {
+    // Check that white pieces and black pieces don't occupy the same square
+    // This can be done with a bitwise XOR across all bitboards which should equal 0;
+    var allBBs: board.BitBoard = board.emptyBitBoard;
+    for (0..15) |i| {
+        const whiteBoard = pos.whitePieces[i];
+        const blackBoard = pos.blackPieces[i];
+        if (whiteBoard.color == Color.none or blackBoard.color == Color.none) return false;
+        allBBs = allBBs ^ whiteBoard.bitboard ^ blackBoard.bitboard;
+    }
+    if (allBBs == board.emptyBitBoard) return true;
+    return false;
+}
+
+/// Checks if a Move is valid
+pub fn isValidMove(mv: move.Move) bool {
+    // Invalid flags
+    if (mv.moveFlags > 5 and mv.moveFlags < 8) return false;
+    if (mv.from == undefined or mv.to == undefined) return false;
     return true;
 }

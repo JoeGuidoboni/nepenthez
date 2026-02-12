@@ -38,27 +38,12 @@ pub const Position = struct {
         return empty_pos;
     }
 
-    /// TODO: add more checks for a valid position
-    pub fn isValidPosition(self: Position) bool {
-        // Check that white pieces and black pieces don't occupy the same square
-        // This can be done with a bitwise XOR across all bitboards which should equal 0;
-        var allBBs: bb.BitBoard = bb.emptyBitBoard;
-        for (0..15) |i| {
-            const whiteBoard = self.whitePieces[i];
-            const blackBoard = self.blackPieces[i];
-            if (whiteBoard.color == Color.none or blackBoard.color == Color.none) return false;
-            allBBs = allBBs ^ whiteBoard.bitboard ^ blackBoard.bitboard;
-        }
-        if (allBBs == bb.emptyBitBoard) return true;
-        return false;
-    }
-
     /// Prints the current position
     /// TODO: add additional FEN information
     ///
     /// Prints the position from whites perspective with A1 in the bottom left and H8 in the top right
     pub fn printPosition(self: Position) !void {
-        if (self.isValidPosition()) return PositionError.InvalidPosition;
+        if (utils.isValidPosition(self)) return PositionError.InvalidPosition;
 
         const line = "   _ _ _ _ _ _ _ _ \n";
         const div = "|";
